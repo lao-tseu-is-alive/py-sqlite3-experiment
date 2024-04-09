@@ -35,6 +35,7 @@ class SearchDatabase:
                     id INTEGER PRIMARY KEY AUTOINCREMENT, 
                     subject TEXT,
                     keywords TEXT NOT NULL,
+                    display TEXT NOT NULL,
                     x INTEGER NOT NULL,
                     y INTEGER NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
