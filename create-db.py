@@ -3,7 +3,7 @@ import sqlite3
 import sys
 
 
-class SearchDatabase:
+class SearchDb:
     def __init__(self, db_name):
         self.db_name = db_name
         self.db_conn = None
@@ -12,10 +12,10 @@ class SearchDatabase:
             if res:
                 self.db_conn = res
             else:
-                print(f"💥 ERROR: creating database {db_name}")
+                print(f"## [SearchDb::__init__] 💥 ERROR: creating database {db_name}")
                 sys.exit(1)
         else:
-            print(f"# 👍 the database '{self.db_name}' was found")
+            print(f"## [SearchDb::__init__] 👍 the database '{self.db_name}' was found")
             self.db_conn = sqlite3.connect(self.db_name)
 
     def db_exists(self):
@@ -43,12 +43,12 @@ class SearchDatabase:
             ''')
 
             conn.commit()
-            print(f"# 👍 Database {self.db_name} created successfully")
+            print(f"## [SearchDb::create_db] 👍 database '{self.db_name}' created successfully")
         except sqlite3.OperationalError as error:
-            print(f"# 💥 ERROR: OperationalError creating database {self.db_name}, error:", error)
+            print(f"## [SearchDb::create_db] 💥 ERROR: OperationalError creating database '{self.db_name}', err:{error}")
             return None
         except Exception as error:
-            print(f"# 💥 Unexpected ERROR: creating database {self.db_name}, error:", error)
+            print(f"## [SearchDb::create_db] 💥 Unexpected ERROR: creating database '{self.db_name}', error:", error)
             return None
         finally:
             if conn:
@@ -57,6 +57,7 @@ class SearchDatabase:
     def close(self):
         if self.db_conn:
             self.db_conn.close()
+            print(f"## [SearchDb::close] 🏁 closed Database '{self.db_name}' successfully")
 
     def __del__(self):
         self.close()
@@ -70,21 +71,59 @@ class SearchDatabase:
             cursor.execute('SELECT COUNT(*) FROM search_item')
             val = cursor.fetchone()
             if val:
-                print(f"# 📊 Total rows in search_item table: {val[0]}")
+                print(f"## [SearchDb::count] 📊 Total rows in search_item table: {val[0]}")
                 return val[0]
             else:
-                print("# 💥 ERROR: Could not get count of search_item table")
+                print("## [SearchDb::count] 💥 ERROR: Could not get count of search_item table")
                 return 0
         return 0
+
+    def search(self, pattern):
+        if self.db_conn:
+            cursor = self.db_conn.cursor()
+            sql = '''
+            SELECT count(*) as num_records,
+                   json_group_array(
+                    json_object(
+                            'info', display,
+                            'x', x,
+                            'y', y
+                        )
+                    ) as records
+            FROM search_item
+            WHERE keywords like ?;
+            '''
+            cursor.execute(sql, ('%' + pattern + '%',))
+            rows = cursor.fetchall()
+            if rows:
+                print(f"## [SearchDb::search] 🔍 Found {len(rows)} rows in search_item table with keyword '{pattern}'")
+            else:
+                print(f"## [SearchDb::search] ⭕ No rows found in search_item table with keyword '{pattern}'")
+            return rows
+        return []
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         dbname = sys.argv[1]
-        db = SearchDatabase(dbname)
+        search = "hello"
+        if len(sys.argv) > 2:
+            search = sys.argv[2]
+
+        db = SearchDb(dbname)
         if db.db_conn:
             print(f"🚀 Connected to database {dbname}  successfully")
-            db.count()
+            num_records = db.count()
+            if num_records > 0:
+                print(f"📊 Total rows in search_item table: {num_records}")
+            else:
+                print("📊 No rows in search_item table")
+            results = db.search(search)
+            if results:
+                print(f"📊 Found {len(results)} rows in search_item table with keyword '{search}'")
+                for row in results:
+                    print(f"num_record: {row[0]}\nrecords: {row[1]}\n")
+
             db.close()
         else:
             print(f"💥 Database {dbname} creation failed")
