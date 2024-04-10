@@ -112,22 +112,22 @@ if __name__ == "__main__":
 
         db = SearchDb(dbname)
         if db.db_conn:
-            print(f"🚀 Connected to database {dbname}  successfully")
+            print(f"# 🚀 Connected to database {dbname}  successfully")
             num_records = db.count()
             if num_records > 0:
-                print(f"📊 Total rows in search_item table: {num_records}")
+                print(f"# 📊 Total rows in search_item table: {num_records}")
             else:
-                print("📊 No rows in search_item table")
+                print("# 📊 No rows in search_item table")
             results = db.search(search)
             if results:
-                print(f"📊 Found {len(results)} rows in search_item table with keyword '{search}'")
+                print(f"# 📊 Found {len(results)} rows in search_item table with keyword '{search}'")
                 for row in results:
-                    print(f"num_record: {row[0]}\nrecords: {row[1]}\n")
+                    print(f"# num_record: {row[0]}\n#records:\n{row[1]}\n")
 
             db.close()
         else:
-            print(f"💥 Database {dbname} creation failed")
+            print(f"# 💥 Database {dbname} creation failed")
             sys.exit(1)
     else:
-        print(f"Usage: {sys.argv[0]} <database_name>")
+        print(f"# Usage: {sys.argv[0]} <database_name>")
         sys.exit(1)
